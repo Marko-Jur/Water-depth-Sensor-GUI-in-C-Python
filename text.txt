@@ -1,0 +1,443 @@
+#import time
+import serial
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import sys, time, math
+import tkinter
+import pygame
+import twilio
+
+#Global variables:
+BUTTONCOLOUR = "RED"
+BUTTONCOLOURFLASH = "GREY"
+TEXTMESSAGEBUTTONCOLOUR = "BLUE"
+USERNAME = 'HEELO'
+USERNUMBER = '324321'
+userName = '932'
+GRAPHLINECOLOUR = 'red'
+GRAPHBUTTONCOLOUR = 'grey'
+PORTPUTTY = 'COM16'
+
+#Function taken from: https://stackoverflow.com/questions/7966119/display-fullscreen-mode-on-tkinter
+class FullScreenApp(object):
+    def __init__(self, master, **kwargs):
+        self.master=master
+        pad=3
+        self._geom='200x200+0+0'
+        master.geometry("{0}x{1}+0+0".format(
+            master.winfo_screenwidth()-pad, master.winfo_screenheight()-pad))
+        master.bind('<Escape>',self.toggle_geom)            
+    def toggle_geom(self,event):
+        geom=self.master.winfo_geometry()
+        print(geom,self._geom)
+        self.master.geometry(self._geom)
+        self._geom=geom
+##################################################################################################################################################################
+def osciliscopeGraph():
+    #putty = serial.Serial(
+    #port='COM5',
+    #baudrate=115200,
+    #parity=serial.PARITY_NONE,
+    #stopbits=serial.STOPBITS_TWO,
+    #bytesize=serial.EIGHTBITS
+    #)
+
+    #ser.isOpen()
+
+
+    def data_gen():
+        t = data_gen.t
+
+        while True:
+            t+=1
+            strin = ser.read(2)
+            numberforchart = int(strin.decode())
+            print(numberforchart)
+
+            yield t, numberforchart
+
+    def run(data):
+        # update the data
+        t,y = data
+        if t>-1:
+            xdata.append(t)
+            ydata.append(y)
+            if t>xsize: # Scroll to the left.
+                ax.set_xlim(t-xsize, t)
+            line.set_data(xdata, ydata)
+        return line,
+
+    def on_close_figure(event):
+        plt.close('all')
+        #putty.close()
+        x = mainMenu()
+        #sys.exit(0)
+    # configure the serial port
+
+    fig = plt.figure()
+
+    while 1 :
+        #print(numberforchart)
+
+        xsize=100    
+        data_gen.t = -1
+        #fig = plt.figure()
+        fig.canvas.mpl_connect('close_event', on_close_figure)
+        ax = fig.add_subplot(111)
+        line, = ax.plot([], [], lw=2,color = GRAPHLINECOLOUR)
+        ax.set_ylim(-100, 100)
+        ax.set_xlim(0, xsize)
+        ax.grid()
+        xdata, ydata = [], []
+
+        # Important: Although blit=True makes graphing faster, we need blit=False to prevent
+        # spurious lines to appear when resizing the stripchart.
+        ani = animation.FuncAnimation(fig, run, data_gen, blit=False, interval=100, repeat=False)
+        plt.show()
+##################################################################################################################################################################
+def capacitorCheck():
+    global PORTPUTTY
+    ser = serial.Serial(
+    port=PORTPUTTY,
+    baudrate=115200,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_TWO,
+    bytesize=serial.EIGHTBITS
+    )
+
+    ser.isOpen()
+    while 1:
+        capValRaw = ser.readline()
+        #try:
+        capVal = int(capValRaw.decode().replace("\r\n","\n"))
+        #except:
+            #capVal = int(capValRaw.decode().replace("\x1b[0K","\n"))
+
+        mainScreenCoverup = Label(window,width = 1600, height = 1600, background = 'white')
+        mainScreenCoverup.place(x = 0,y = 350)
+
+        main2ScreenCoverup = Label(window,width = 1000, height = 1000, background = 'white')
+        main2ScreenCoverup.place(x = 240, y = 500)
+        print(capVal)
+
+        a = StringVar()
+        a.set(capVal)
+        #print("new"+ str(a))
+
+        capLabel = Label(window,text = 'Capacitance:', width = 15,height = 1, background = 'white', fg = 'black', font = ("MS Sans Serif", 48), underline = 10)
+        capLabel.place(x = 450, y = 340)
+        
+        #cap2Label = Label(window,text = 'nF', width = 15,height = 1, background = 'white', fg = 'black', font = ("MS Sans Serif", 24))
+        #cap2Label.place(x = 440, y = 900)
+
+        capValLabel = Label(window,textvariable = a, width = 15,height = 1, background = 'white', fg = 'black', font = ("MS Sans Serif", 96) )
+        capValLabel.place(x = 190, y = 500)
+        capValLabel.config(text=str(a))
+        window.update()
+##################################################################################################################################################################
+def rainCheck():
+    global PORTPUTTY
+    ser = serial.Serial(
+    port=PORTPUTTY,
+    baudrate=115200,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_TWO,
+    bytesize=serial.EIGHTBITS
+    )
+
+    ser.isOpen()
+    while 1:
+        rainValRaw = ser.readline()
+        #try:
+        rainVal = int(rainValRaw.decode().replace("\r\n","\n"))
+        print(rainVal)
+        if (rainVal == 572):
+            x = sendWaterSMS()
+            break
+        
+    ser.close()
+    x = mainMenu()
+##################################################################################################################################################################
+# Change graph colours
+def redLine():
+    global GRAPHLINECOLOUR
+    #Clearing the screen
+    clear = Label(window, background = 'white', width = 8)
+    clear.place(x=800,y=460)
+
+    clear2 = Label(window, background = 'white', width = 8)
+    clear2.place(x=800,y=510)
+
+    clear3 = Label(window, background = 'white', width = 8)
+    clear3.place(x=800,y=570)
+
+    clear4 = Label(window, background = 'white', width = 8)
+    clear4.place(x=800,y=630)
+
+    GRAPHLINECOLOUR = 'red'
+    redBox = Label(window, background = 'red', width = 8)
+    redBox.place(x=800,y=460)
+
+
+
+def blueLine():
+    global GRAPHLINECOLOUR
+    #Clearing the screen
+    clear = Label(window, background = 'white', width = 8)
+    clear.place(x=800,y=460)
+
+    clear2 = Label(window, background = 'white', width = 8)
+    clear2.place(x=800,y=510)
+
+    clear3 = Label(window, background = 'white', width = 8)
+    clear3.place(x=800,y=570)
+
+    clear4 = Label(window, background = 'white', width = 8)
+    clear4.place(x=800,y=630)
+
+    GRAPHLINECOLOUR = 'blue'
+
+    blueBox = Label(window, background = 'blue', width = 8)
+    blueBox.place(x=800,y=510)
+
+def yellowLine():
+    global GRAPHLINECOLOUR
+    #Clearing the screen
+    clear = Label(window, background = 'white', width = 8)
+    clear.place(x=800,y=460)
+
+    clear2 = Label(window, background = 'white', width = 8)
+    clear2.place(x=800,y=510)
+
+    clear3 = Label(window, background = 'white', width = 8)
+    clear3.place(x=800,y=570)
+
+    clear4 = Label(window, background = 'white', width = 8)
+    clear4.place(x=800,y=630)
+
+    GRAPHLINECOLOUR = 'yellow'
+
+    yellowBox = Label(window, background = 'yellow', width = 8)
+    yellowBox.place(x=800,y=570)
+
+def orangeLine():
+    global GRAPHLINECOLOUR
+    #Clearing the screen
+    clear = Label(window, background = 'white', width = 8)
+    clear.place(x=800,y=460)
+
+    clear2 = Label(window, background = 'white', width = 8)
+    clear2.place(x=800,y=510)
+
+    clear3 = Label(window, background = 'white', width = 8)
+    clear3.place(x=800,y=570)
+
+    clear4 = Label(window, background = 'white', width = 8)
+    clear4.place(x=800,y=630)
+
+    GRAPHLINECOLOUR = 'orange'
+
+    orangeBox = Label(window, background = 'orange', width = 8)
+    orangeBox.place(x=800,y=630)
+
+##################################################################################################################################################################
+def changeGraphColour():
+    #Clearing screen
+    mainScreenCoverup = Label(window,width = 1600, height = 1600, background = 'white')
+    mainScreenCoverup.place(x = 0,y = 350)
+
+    main2ScreenCoverup = Label(window,width = 1000, height = 1000, background = 'white')
+    main2ScreenCoverup.place(x = 240, y = 500)
+
+    redButton = Button(window,text="Red",width = 16, background = GRAPHBUTTONCOLOUR, activebackground = BUTTONCOLOURFLASH, fg = 'red', command = redLine)
+    redButton.place(x=650,y=460)
+
+    blueButton = Button(window,text="Blue",width = 16, background = GRAPHBUTTONCOLOUR, activebackground = BUTTONCOLOURFLASH,  fg = 'blue', command = blueLine)
+    blueButton.place(x=650,y=510)
+
+    yellowButton = Button(window,text="Yellow",width = 16, background = GRAPHBUTTONCOLOUR, activebackground = BUTTONCOLOURFLASH,  fg = 'yellow', command = yellowLine)
+    yellowButton.place(x=650,y=560)
+
+    orangeButton = Button(window,text="Orange",width = 16, background = GRAPHBUTTONCOLOUR, activebackground = BUTTONCOLOURFLASH,  fg = 'orange',command = orangeLine)
+    orangeButton.place(x=650,y=610)
+
+    #Go back 
+    goBackButton = Button(window,text="Go back",width = 16, background = BUTTONCOLOUR, fg = 'black',  activebackground = BUTTONCOLOURFLASH, command = mainMenu)
+    goBackButton.place(x=2,y=4)
+###################################################################################################################################################################
+def sendWaterSMS():
+    global USERNUMBER
+    global USERNAME
+    
+
+    # we import the Twilio client from the dependency we just installed
+    from twilio.rest import Client
+
+    # the following line needs your Twilio Account SID and Auth Token
+    client = Client("AC99e9e01f137d4f28043bba819a9c8cc3", "3ccbf1dbb4fcadbf8d2923957d33f824")
+
+    # change the "from_" number to your Twilio number and the "to" number
+    # to the phone number you signed up for Twilio with, or upgrade your
+    # account to send SMS to any phone number
+    client.messages.create(to=USERNUMBER, 
+                        from_="+17316024317", 
+                        body="Hello " + USERNAME + ",it's raining")
+###################################################################################################################################################################
+def sendTestSMS():
+    global TESTMESSAGE
+    global USERNUMBER
+    global USERNAME
+    
+
+    # we import the Twilio client from the dependency we just installed
+    from twilio.rest import Client
+
+    # the following line needs your Twilio Account SID and Auth Token
+    client = Client("AC99e9e01f137d4f28043bba819a9c8cc3", "3ccbf1dbb4fcadbf8d2923957d33f824")
+
+    # change the "from_" number to your Twilio number and the "to" number
+    # to the phone number you signed up for Twilio with, or upgrade your
+    # account to send SMS to any phone number
+    client.messages.create(to=USERNUMBER, 
+                        from_="+17316024317", 
+                        body="Hello " + USERNAME + ", this is a test message from your capacitor meter")
+####################################################################################################################################################################
+def checkUserName():
+    global USERNAME
+    USERNAME = userName.get()
+    #print(user)
+    showUserName = Label(window, text = "Hello " + USERNAME + "!", font=("Comic Sans MS", 16), background = 'white', fg = 'black')
+    showUserName.place(x = 790, y = 500)
+
+#################################################################################################################################
+
+def checkUserNumber():
+    global USERNUMBER
+    USERNUMBER = '+1' + userNum.get()
+    #print(userNum)
+    showUserName = Label(window, text = "Cool Number: " + USERNUMBER, font=("Comic Sans MS", 16), background = 'white', fg = 'black')
+    showUserName.place(x = 790, y = 600)
+    
+
+##################################################################################################################################
+
+def doneData():
+    global USERNAME
+    global USERNUMBER
+    
+    #Clearing screen
+    mainScreenCoverup = Label(window,width = 1200, height = 1000, background = 'white')
+    mainScreenCoverup.place(x = 0,y = 450)
+
+    main2ScreenCoverup = Label(window,width = 1000, height = 1000, background = 'white')
+    main2ScreenCoverup.place(x = 240, y = 500)
+
+    #Print text set message
+    Message = Label(window,width = 60,  background = 'white', text = "Thank you " + USERNAME + ",you will be sent a text message at: ", font=("Comic Sans MS", 20), fg = 'black')
+    Message.place(x = 220,y = 460)
+
+    Message2 = Label(window,width = 40,  background = 'white', text = USERNUMBER , font=("Comic Sans MS", 20), fg = 'black')
+    Message2.place(x = 395,y = 560)
+
+    SMSTestButton = Button(window,text="Send Test SMS",width = 16, background = 'green', fg = 'black', activebackground = 'grey', command = sendTestSMS)
+    SMSTestButton.place(x = 650, y = 740)
+
+    homeButton = Button(window,text="Return",width = 16, background = 'green', fg = 'black', activebackground = 'grey', command = mainMenu)
+    homeButton.place(x= 650 ,y = 690)
+
+    redoButton = Button(window,text="Redo",width = 16, background = 'green', fg = 'black', activebackground = 'grey', command = numberSetter)
+    redoButton.place(x = 650, y = 640)
+
+#####################################################################################################################################################################
+
+def numberSetter():
+    global userName
+    global USERNUMBER
+    global userNum
+    
+
+    #Clearing screen
+    mainScreenCoverup = Label(window,width = 1600, height = 1600, background = 'white')
+    mainScreenCoverup.place(x = 0,y = 350)
+
+    main2ScreenCoverup = Label(window,width = 1600, height = 1600, background = 'white')
+    main2ScreenCoverup.place(x = 240, y = 500)
+
+    
+
+    #Username
+    userName = Entry(window, background = 'grey')
+    userName.place(x  = 790, y = 465)
+
+    enterNameButton = Button(window,text="Enter name",width = 16, background = TEXTMESSAGEBUTTONCOLOUR, fg = 'black', activebackground = 'grey',  command = checkUserName)
+    enterNameButton.place(x=650,y=460)
+
+    #User Number
+    userNum = Entry(window, background = 'grey')
+    userNum.place(x = 790, y = 565)
+
+    enterNumberButton = Button(window,text="Enter number",width = 16, background = TEXTMESSAGEBUTTONCOLOUR, fg = 'black', activebackground = 'grey',command = checkUserNumber)
+    enterNumberButton.place(x=650,y=560)
+
+    doneButton = Button(window,text="Done",width = 16, background = TEXTMESSAGEBUTTONCOLOUR, fg = 'black', activebackground = 'grey', command = doneData)
+    doneButton.place(x='650',y=660)
+
+    #Go back 
+    goBackButton = Button(window,text="Go back",width = 16, background = BUTTONCOLOUR, fg = 'black',  activebackground = BUTTONCOLOURFLASH, command = mainMenu)
+    goBackButton.place(x=2,y=4)
+
+
+#####################################################################################################################################################################
+def mainMenu():
+    #Clearing screen
+    mainScreenCoverup = Label(window,width = 1600, height = 1600, background = 'white')
+    mainScreenCoverup.place(x = 0,y = 350)
+
+    #startbutton
+    startButton = Button(window,text="Find Capacitance", width = 16, background = BUTTONCOLOUR , activebackground = BUTTONCOLOURFLASH  ,  fg = 'black', command = capacitorCheck)
+    startButton.place(x=250,y=430)
+    
+
+    #Options button
+    optionsButton = Button(window,text="Osciliscope",width = 16, background = BUTTONCOLOUR, fg = 'black', activebackground = BUTTONCOLOURFLASH, command = osciliscopeGraph)
+    optionsButton.place(x=450,y=430)
+
+    #Print Graph button
+    printGraphButton = Button(window,text="Rain Detector",width = 16, background = BUTTONCOLOUR, fg = 'black', activebackground = BUTTONCOLOURFLASH, command = rainCheck)
+    printGraphButton.place(x=650,y=430)
+
+    #Go back 
+    goBackButton = Button(window,text="Go back",width = 16, background = BUTTONCOLOUR, fg = 'black',  activebackground = BUTTONCOLOURFLASH)
+    goBackButton.place(x=2,y=4)
+
+    #Credits
+    creditsButton = Button(window,text="Oscilliscope settings",width = 16, background = BUTTONCOLOUR, fg = 'black', activebackground = BUTTONCOLOURFLASH,command = changeGraphColour)
+    creditsButton.place(x=850,y=430)
+
+    #Credits
+    creditsButton = Button(window,text="Set Number",width = 16, background = BUTTONCOLOUR, fg = 'black', activebackground = BUTTONCOLOURFLASH, command = numberSetter)
+    creditsButton.place(x=1050,y=430)
+
+
+    window.mainloop()
+
+########################################################################################################################################################################################
+
+## Main code
+#Tkinter main menu:
+from tkinter import *
+#Creating window 
+window = Tk()
+window.title("Capacitor")
+window.configure(background="white")
+full =FullScreenApp(window)
+
+#Adding gif to the window
+mainImage = PhotoImage(file = "giphy.gif")
+Label(window, image = mainImage, bg = "white").grid(row = 0, column = 0, padx  =570, pady = 110)
+
+x = mainMenu()
+
+#loop the window always
+window.mainloop()
